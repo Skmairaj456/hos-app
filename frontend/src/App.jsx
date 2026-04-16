@@ -7,7 +7,11 @@ function App() {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+  const API_BASE = (
+    import.meta.env.VITE_API_BASE ||
+    import.meta.env.VITE_API_URL ||
+    'http://localhost:8000'
+  ).replace(/\/$/, '')
 
   return (
     <div className="app-shell">
