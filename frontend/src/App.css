@@ -361,6 +361,13 @@
   background: linear-gradient(135deg, #6b7280, #9ca3af);
 }
 
+.log-sheet-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--gray-200);
+}
 .recap-card {
   background: linear-gradient(135deg, var(--gray-50), white);
   border: 2px solid var(--gray-200);
@@ -413,6 +420,195 @@
 .notes-panel ul {
   margin: 0;
   padding-left: 1.5rem;
+}
+
+/* ── Map Legend ── */
+.current-loc-warning {
+  margin-top: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  padding: 0.65rem 1rem;
+  margin-top: 0.5rem;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  color: var(--gray-700);
+}
+
+.map-legend-title {
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-600);
+  margin-right: 0.25rem;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 500;
+}
+
+.map-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.map-legend-line {
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* ── Log Sheet 24-hour grid ── */
+.log-grid {
+  position: relative;
+  margin: 1.5rem 0;
+  border: 2px solid var(--gray-200);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.log-grid-ticks {
+  position: relative;
+  height: 1.4rem;
+  background: var(--gray-100);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.log-grid-ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  color: var(--gray-600);
+  font-weight: 600;
+}
+
+.log-grid-lines {
+  position: absolute;
+  top: 1.4rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.log-grid-lines span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--gray-200);
+}
+
+.log-grid-row {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--gray-200);
+  min-height: 2rem;
+}
+
+.log-grid-row-label {
+  width: 180px;
+  flex-shrink: 0;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  background: var(--gray-50);
+  border-right: 1px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+}
+
+.log-grid-row-track {
+  position: relative;
+  flex: 1;
+}
+
+.log-grid-block {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 3px;
+  min-width: 2px;
+  cursor: default;
+}
+
+/* ── Legend ── */
+.log-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--gray-200);
+  background: var(--gray-50);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--gray-700);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── Log sheet info row ── */
+.log-sheet-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.log-sheet-remarks h4,
+.log-sheet-docs h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary-dark);
+}
+
+.log-sheet-remarks p,
+.log-sheet-docs p {
+  margin: 0.2rem 0;
+  font-size: 0.85rem;
+  color: var(--gray-700);
 }
 
 @media (max-width: 980px) {

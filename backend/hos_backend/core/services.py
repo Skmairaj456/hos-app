@@ -16,6 +16,7 @@ def calculate_schedule(distance, cycle_used):
     """Calculate a realistic HOS multi-day plan for a truck driver.
 
     Returns a dictionary with day-by-day segments, timeline blocks, and safety notes.
+    Each segment includes a start_hour (0-24) representing when it starts within the day.
     """
     remaining_distance = float(distance)
     remaining_drive_hours = remaining_distance / AVERAGE_SPEED_MPH
@@ -29,6 +30,8 @@ def calculate_schedule(distance, cycle_used):
     first_day = True
 
     def add_segment(record, segment):
+        segment = dict(segment)
+        segment['start_hour'] = round(record['on_duty_hours'] + record['rest_hours'], 2)
         record['segments'].append(segment)
         record['timeline'].append(segment)
         if segment['type'] == 'driving':
@@ -41,20 +44,17 @@ def calculate_schedule(distance, cycle_used):
 
     while remaining_drive_hours > 0 or (first_day and not schedule):
         if remaining_cycle_hours <= 0:
+            reset_seg = {
+                'type': 'cycle_reset',
+                'label': '34-hour reset',
+                'duration_hours': RESET_HOURS,
+                'start_hour': 0.0,
+                'notes': 'Mandatory 34-hour reset to clear the 70-hour cycle.',
+            }
             schedule.append({
                 'day': day,
-                'segments': [{
-                    'type': 'cycle_reset',
-                    'label': '34-hour reset',
-                    'duration_hours': RESET_HOURS,
-                    'notes': 'Mandatory 34-hour reset to clear the 70-hour cycle.',
-                }],
-                'timeline': [{
-                    'type': 'cycle_reset',
-                    'label': '34-hour reset',
-                    'duration_hours': RESET_HOURS,
-                    'notes': 'Mandatory 34-hour reset to clear the 70-hour cycle.',
-                }],
+                'segments': [reset_seg],
+                'timeline': [reset_seg],
                 'driving_hours': 0.0,
                 'on_duty_hours': RESET_HOURS,
                 'rest_hours': 0.0,
