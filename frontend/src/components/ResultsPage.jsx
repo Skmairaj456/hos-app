@@ -42,6 +42,9 @@ export default function ResultsPage({ result, error }) {
 
     const loadRoute = async () => {
       try {
+        setMapError('')
+        setCurrentLocWarning('')
+
         const [pickupCoord, dropoffCoord] = await Promise.all([
           geocode(result.trip.pickup_location),
           geocode(result.trip.dropoff_location),
@@ -52,7 +55,7 @@ export default function ResultsPage({ result, error }) {
           return
         }
 
-        // Try to show current location marker — geocode first, fall back to browser GPS
+        // Try to show current location marker without letting vague text map to wrong places.
         const makeIcon = (color) =>
           L.divIcon({
             className: '',
@@ -61,11 +64,8 @@ export default function ResultsPage({ result, error }) {
             iconAnchor: [8, 8],
           })
 
-        let currentCoord = await geocode(result.trip.current_location).catch(() => null)
-
-        if (!currentCoord) {
-          // Try browser geolocation as fallback
-          currentCoord = await new Promise((resolve) => {
+        const getBrowserLocation = () =>
+          new Promise((resolve) => {
             if (!navigator.geolocation) return resolve(null)
             navigator.geolocation.getCurrentPosition(
               (pos) => resolve([pos.coords.latitude, pos.coords.longitude]),
@@ -73,19 +73,54 @@ export default function ResultsPage({ result, error }) {
               { timeout: 5000 },
             )
           })
-          if (currentCoord) {
-            setCurrentLocWarning(`Could not find "${result.trip.current_location}" on map — showing your device's GPS location instead.`)
-          } else {
-            setCurrentLocWarning(`Could not resolve current location "${result.trip.current_location}" — try entering a city name or address.`)
-          }
-        } else {
-          setCurrentLocWarning('')
+
+        const rawCurrentText = (result.trip.current_location || '').trim()
+        const normalizedCurrentText = rawCurrentText.toLowerCase()
+        const genericInputs = new Set([
+          'home',
+          'my home',
+          'current location',
+          'current',
+          'my location',
+          'here',
+        ])
+        const shouldPreferGps = genericInputs.has(normalizedCurrentText)
+
+        let usedGps = false
+        let currentCoord = null
+
+        if (shouldPreferGps) {
+          currentCoord = await getBrowserLocation()
+          usedGps = !!currentCoord
+        }
+
+        if (!currentCoord && rawCurrentText) {
+          currentCoord = await geocode(rawCurrentText).catch(() => null)
+        }
+
+        if (!currentCoord) {
+          currentCoord = await getBrowserLocation()
+          usedGps = !!currentCoord
+        }
+
+        if (currentCoord && usedGps) {
+          setCurrentLocWarning(
+            `Using your device GPS for current location because "${rawCurrentText}" is too generic or could not be mapped reliably.`,
+          )
+        } else if (!currentCoord) {
+          setCurrentLocWarning(
+            `Could not resolve current location "${rawCurrentText}" — try a full city/state or enable location access.`,
+          )
         }
 
         if (currentCoord) {
           L.marker(currentCoord, { icon: makeIcon('#06b6d4') })
             .addTo(map)
-            .bindPopup(`<strong>Current Location</strong><br>${result.trip.current_location}`)
+            .bindPopup(
+              usedGps
+                ? '<strong>Current Location</strong><br>Device GPS'
+                : `<strong>Current Location</strong><br>${result.trip.current_location}`,
+            )
         }
 
         L.marker(pickupCoord, { icon: makeIcon('#10b981') })
