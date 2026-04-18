@@ -45,11 +45,52 @@ export default function ResultsPage({ result, error }) {
     }).addTo(map)
 
     const geocode = async (address) => {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
-      )
-      const data = await response.json()
-      return data?.[0] ? [Number(data[0].lat), Number(data[0].lon)] : null
+      const query = (address || '').trim()
+      if (!query) return null
+
+      const candidates = [query]
+      if (!/\b(usa|united states|us)\b/i.test(query)) {
+        candidates.push(`${query}, USA`)
+      }
+
+      const tryNominatim = async (q) => {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1&addressdetails=1`,
+        )
+        if (!response.ok) return null
+        const data = await response.json()
+        return data?.[0] ? [Number(data[0].lat), Number(data[0].lon)] : null
+      }
+
+      const tryPhoton = async (q) => {
+        const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1`)
+        if (!response.ok) return null
+        const data = await response.json()
+        const coords = data?.features?.[0]?.geometry?.coordinates
+        return Array.isArray(coords) && coords.length === 2 ? [Number(coords[1]), Number(coords[0])] : null
+      }
+
+      const tryMapsCo = async (q) => {
+        const response = await fetch(
+          `https://geocode.maps.co/search?q=${encodeURIComponent(q)}&api_key=&limit=1`,
+        )
+        if (!response.ok) return null
+        const data = await response.json()
+        return data?.[0] ? [Number(data[0].lat), Number(data[0].lon)] : null
+      }
+
+      for (const q of candidates) {
+        const fromNominatim = await tryNominatim(q).catch(() => null)
+        if (fromNominatim) return fromNominatim
+
+        const fromPhoton = await tryPhoton(q).catch(() => null)
+        if (fromPhoton) return fromPhoton
+
+        const fromMapsCo = await tryMapsCo(q).catch(() => null)
+        if (fromMapsCo) return fromMapsCo
+      }
+
+      return null
     }
 
     const geocodeCandidates = async (address) => {
@@ -79,7 +120,16 @@ export default function ResultsPage({ result, error }) {
         ])
 
         if (!pickupCoord || !dropoffCoord) {
-          setMapError('Unable to geocode pickup or dropoff address for mapping.')
+          const failed = [
+            !pickupCoord ? `pickup: "${result.trip.pickup_location}"` : null,
+            !dropoffCoord ? `dropoff: "${result.trip.dropoff_location}"` : null,
+          ]
+            .filter(Boolean)
+            .join(' and ')
+
+          setMapError(
+            `Unable to geocode ${failed}. Please use fuller address text (city + state/country).`,
+          )
           return
         }
 
