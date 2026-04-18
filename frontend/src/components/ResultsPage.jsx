@@ -16,6 +16,18 @@ function formatHours(hours) {
   return `${hours.toFixed(2)}h`
 }
 
+function haversineMiles([lat1, lon1], [lat2, lon2]) {
+  const toRad = (deg) => (deg * Math.PI) / 180
+  const R = 3958.8
+  const dLat = toRad(lat2 - lat1)
+  const dLon = toRad(lon2 - lon1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
 export default function ResultsPage({ result, error }) {
   const [mapError, setMapError] = useState('')
   const [currentLocWarning, setCurrentLocWarning] = useState('')
@@ -38,6 +50,22 @@ export default function ResultsPage({ result, error }) {
       )
       const data = await response.json()
       return data?.[0] ? [Number(data[0].lat), Number(data[0].lon)] : null
+    }
+
+    const geocodeCandidates = async (address) => {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=5&addressdetails=1`,
+      )
+      const data = await response.json()
+      return Array.isArray(data)
+        ? data
+            .map((item) => ({
+              lat: Number(item.lat),
+              lon: Number(item.lon),
+              displayName: item.display_name,
+            }))
+            .filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lon))
+        : []
     }
 
     const loadRoute = async () => {
@@ -70,7 +98,11 @@ export default function ResultsPage({ result, error }) {
             navigator.geolocation.getCurrentPosition(
               (pos) => resolve([pos.coords.latitude, pos.coords.longitude]),
               () => resolve(null),
-              { timeout: 5000 },
+              {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0,
+              },
             )
           })
 
@@ -89,23 +121,50 @@ export default function ResultsPage({ result, error }) {
         let usedGps = false
         let currentCoord = null
 
-        if (shouldPreferGps) {
-          currentCoord = await getBrowserLocation()
-          usedGps = !!currentCoord
+        // Always try browser GPS first for best accuracy.
+        currentCoord = await getBrowserLocation()
+        usedGps = !!currentCoord
+
+        if (!currentCoord && rawCurrentText) {
+          if (shouldPreferGps) {
+            setCurrentLocWarning(
+              `Could not access device GPS for "${rawCurrentText}". Showing best text match instead. Enable location permission for precise current location.`,
+            )
+          }
+
+          const candidates = await geocodeCandidates(rawCurrentText).catch(() => [])
+          if (candidates.length > 0) {
+            const scored = candidates
+              .map((candidate) => {
+                const coord = [candidate.lat, candidate.lon]
+                const toPickup = haversineMiles(coord, pickupCoord)
+                const toDropoff = haversineMiles(coord, dropoffCoord)
+                return {
+                  coord,
+                  displayName: candidate.displayName,
+                  score: Math.min(toPickup, toDropoff),
+                }
+              })
+              .sort((a, b) => a.score - b.score)
+
+            currentCoord = scored[0].coord
+
+            if (scored[0].score > 200 && !shouldPreferGps) {
+              setCurrentLocWarning(
+                `Current location text matched a place far from your route. For better accuracy, use a full address or enable GPS.`,
+              )
+            }
+          }
         }
 
         if (!currentCoord && rawCurrentText) {
-          currentCoord = await geocode(rawCurrentText).catch(() => null)
-        }
-
-        if (!currentCoord) {
           currentCoord = await getBrowserLocation()
           usedGps = !!currentCoord
         }
 
-        if (currentCoord && usedGps) {
+        if (currentCoord && usedGps && rawCurrentText) {
           setCurrentLocWarning(
-            `Using your device GPS for current location because "${rawCurrentText}" is too generic or could not be mapped reliably.`,
+            `Using your device GPS for current location to avoid inaccurate text geocoding.`,
           )
         } else if (!currentCoord) {
           setCurrentLocWarning(
