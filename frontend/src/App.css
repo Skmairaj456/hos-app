@@ -491,37 +491,32 @@
   overflow: hidden;
 }
 
-.log-grid-ticks {
+.log-grid-head {
+  display: flex;
+  align-items: stretch;
+}
+
+.log-grid-spacer {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--gray-200);
+  background: var(--gray-50);
+}
+
+.log-grid-tick-track {
   position: relative;
+  flex: 1;
   height: 1.4rem;
   background: var(--gray-100);
   border-bottom: 1px solid var(--gray-200);
 }
 
-.log-grid-ticks span {
+.log-grid-tick-track span {
   position: absolute;
   transform: translateX(-50%);
   font-size: 0.65rem;
   color: var(--gray-600);
   font-weight: 600;
-}
-
-.log-grid-lines {
-  position: absolute;
-  top: 1.4rem;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.log-grid-lines span {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--gray-200);
 }
 
 .log-grid-row {
@@ -532,7 +527,7 @@
 }
 
 .log-grid-row-label {
-  width: 180px;
+  width: 220px;
   flex-shrink: 0;
   padding: 0.4rem 0.75rem;
   font-size: 0.72rem;
@@ -542,11 +537,23 @@
   border-right: 1px solid var(--gray-200);
   display: flex;
   align-items: center;
+  white-space: nowrap;
 }
 
 .log-grid-row-track {
   position: relative;
   flex: 1;
+  background: white;
+}
+
+.log-grid-hour-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--gray-200);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .log-grid-block {
@@ -556,6 +563,7 @@
   border-radius: 3px;
   min-width: 2px;
   cursor: default;
+  z-index: 2;
 }
 
 /* ── Legend ── */

@@ -60,27 +60,29 @@ function DutyGrid({ timeline }) {
 
   return (
     <div className="log-grid">
-      <div className="log-grid-ticks">
-        {hourTicks.map((h) => (
-          <span key={h} style={{ left: `${(h / 24) * 100}%` }}>
-            {h === 0 ? 'M' : h === 12 ? 'N' : h === 24 ? 'M' : h}
-          </span>
-        ))}
+      <div className="log-grid-head">
+        <div className="log-grid-spacer" />
+        <div className="log-grid-tick-track">
+          {hourTicks.map((h) => (
+            <span key={h} style={{ left: `${(h / 24) * 100}%` }}>
+              {h === 0 ? 'M' : h === 12 ? 'N' : h === 24 ? 'M' : h}
+            </span>
+          ))}
+        </div>
       </div>
-      <div className="log-grid-lines">
-        {hourTicks.map((h) => (
-          <span key={h} style={{ left: `${(h / 24) * 100}%` }} />
-        ))}
-      </div>
+
       {rows.map((blocks, rowIdx) => (
         <div key={rowIdx} className="log-grid-row">
           <div className="log-grid-row-label">{ROW_LABELS[rowIdx]}</div>
           <div className="log-grid-row-track">
+            {hourTicks.map((h) => (
+              <span key={h} className="log-grid-hour-line" style={{ left: `${(h / 24) * 100}%` }} />
+            ))}
             {blocks.map((b, i) => (
               <div
                 key={i}
                 className="log-grid-block"
-                  title={`${b.label} - ${b.duration.toFixed(2)}h`}
+                title={`${b.label} - ${b.duration.toFixed(2)}h`}
                 style={{
                   left: `${(b.start / 24) * 100}%`,
                   width: `${(b.duration / 24) * 100}%`,
